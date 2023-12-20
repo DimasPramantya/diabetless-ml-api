@@ -3,7 +3,21 @@ const predict = require("../util/predictImage");
 const recommendation = require("../util/recommendation");
 const jwt = require('jsonwebtoken');
 const db = require('../util/connect_db');
-const bucket = require('../util/connect_storage')
+
+const jwtKey = process.env.JWT_KEY;
+
+const getToken = (headers) => {
+  const authorizationHeader = headers.authorization;
+  if (authorizationHeader && authorizationHeader.startsWith('Bearer ')) {
+      return (authorizationHeader.substring(7)); // Remove 'Bearer ' from the header
+  }
+  else {
+      const error = new Error("You need to login");
+      error.status = 401;
+      throw error;
+  }
+}
+
 
 const predictFood = async(req,res,next)=>{
   try {

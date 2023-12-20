@@ -14,6 +14,7 @@ app.use(cors({
   origin: "*",
   methods: ['POST']
 }));
+
 app.use(predictRoutes);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 

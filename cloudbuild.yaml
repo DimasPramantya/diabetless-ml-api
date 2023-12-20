@@ -1,0 +1,13 @@
+steps:
+    - name: 'gcr.io/cloud-builders/gsutil'
+      args: ['cp', '${_PATH_TO_ENV}', '.env']
+    - name: 'gcr.io/cloud-builders/gsutil'
+      args: ['cp', '${_PATH_TO_STORAGE_CREDENTIALS}', 'storage-credentials.json']
+    - name: 'gcr.io/cloud-builders/gsutil'
+      args: ['cp', '${_PATH_TO_FIREBASE_CREDENTIALS}', 'firebase-credentials.json']
+    - name: 'gcr.io/cloud-builders/docker'
+      args: [ 'build', '-t', 'gcr.io/${_PROJECT_ID}/deployed-model', '.' ]
+    - name: 'gcr.io/cloud-builders/docker'
+      args: [ 'push', 'gcr.io/${_PROJECT_ID}/deployed-model']
+    - name: "gcr.io/cloud-builders/gcloud"
+      args: ['run', 'deploy', 'deployed-model', '--image', 'gcr.io/${_PROJECT_ID}/deployed-model', '--region', 'asia-southeast2', '--platform', 'managed', '--allow-unauthenticated']
