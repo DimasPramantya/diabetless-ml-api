@@ -35,3 +35,8 @@ We have created the API Documentation for this service based on OPEN API specifi
 
 
 <h3>Instructions</h3>
+<h4>Detect Food Services</h4>
+The detect food service uses a food image provided by the mobile app. The image will be given to the model to identify the type of food according to the classes available in the model. <br>
+The image formats accepted by the model are <strong>.jpg, .jpeg, .png</strong> . The image will not be saved and will disappear when the identification is complete. <br>
+If the prediction is successful, the service will return the type of food identified and provide recommendations if the identification results are unhealthy food in the <strong>JSON form</strong>.
+
