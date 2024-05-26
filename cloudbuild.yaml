@@ -1,13 +1,76 @@
 steps:
-    - name: 'gcr.io/cloud-builders/gsutil'
-      args: ['cp', '${_PATH_TO_ENV}', '.env']
-    - name: 'gcr.io/cloud-builders/gsutil'
-      args: ['cp', '${_PATH_TO_STORAGE_CREDENTIALS}', 'storage-credentials.json']
-    - name: 'gcr.io/cloud-builders/gsutil'
-      args: ['cp', '${_PATH_TO_FIREBASE_CREDENTIALS}', 'firebase-credentials.json']
-    - name: 'gcr.io/cloud-builders/docker'
-      args: [ 'build', '-t', 'gcr.io/${_PROJECT_ID}/deployed-model', '.' ]
-    - name: 'gcr.io/cloud-builders/docker'
-      args: [ 'push', 'gcr.io/${_PROJECT_ID}/deployed-model']
-    - name: "gcr.io/cloud-builders/gcloud"
-      args: ['run', 'deploy', 'deployed-model', '--image', 'gcr.io/${_PROJECT_ID}/deployed-model', '--region', 'asia-southeast2', '--platform', 'managed', '--allow-unauthenticated']
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - 'cp'
+      - '${_PATH_TO_ENV}'
+      - '.env'
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - 'cp'
+      - '${_PATH_TO_STORAGE_CREDENTIALS}'
+      - 'storage-credentials.json'
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: 
+      - 'cp'
+      - '${_PATH_TO_FIREBASE_CREDENTIALS}'
+      - 'firestore-credentials.json'
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '--no-cache'
+      - '-t'
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - .
+      - '-f'
+      - Dockerfile
+    id: Build
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '--no-cache'
+      - '-t'
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - .
+      - '-f'
+      - Dockerfile
+    id: Build
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+    id: Push
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - '--platform=managed'
+      - >-
+        --image=$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+      - '--region=$_DEPLOY_REGION'
+      - '--quiet'
+    id: Deploy
+    entrypoint: gcloud
+images:
+  - >-
+    $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+options:
+  substitutionOption: ALLOW_LOOSE
+  logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _PLATFORM: managed
+  _SERVICE_NAME: diabetless-ml-api
+  REPO_NAME: ml-deployment
+  _TRIGGER_ID: 1fd8ded8-2a35-4dac-82b2-7cfc2fb29d69
+  _DEPLOY_REGION: asia-southeast2
+  _AR_HOSTNAME: asia-southeast2-docker.pkg.dev
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - diabetless-ml-api
